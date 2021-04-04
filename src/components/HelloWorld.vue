@@ -31,10 +31,53 @@
 </template>
 
 <script>
+import {ref} from 'vue'
+import Web3 from 'web3'
+import * as songABI from './songABI.json'
+
 export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
+  name: 'CheckID',
+  setup() {
+    
+    const ethEnabled = () => {
+    if (window.web3) {
+    window.web3 = new Web3(window.web3.currentProvider);
+    window.ethereum.enable();
+    console.log(window.web3.currentProvider)
+    return true;
+    }
+  return false;
+  }
+
+  if (!ethEnabled()) {
+  alert("Please install MetaMask to use this dApp!");
+}
+    let id = ref('Id du network:')
+    let blockNumber = ref('')
+    let account = ref('')
+    let contractAddress = "0x004a84209A0021b8FF182FfD8BB874c53F65e90E"
+    let tokenContract = new window.web3.eth.Contract(songABI.abi, contractAddress)
+    
+    const networkId =  async () => {
+      const res = await window.web3.eth.net.getId()
+      const blockNumberRes = await window.web3.eth.getBlockNumber()
+      blockNumber.value.innerText = `Numero du dernier block: ${ blockNumberRes }`
+      id.value.innerText = `Id du network: ${ res }`
+      account.value.innerText = window.web3.currentProvider.selectedAddress
+      console.log(window.web3.currentProvider.selectedAddress, window.web3.eth.accounts)
+      // amount.value = id
+      console.log(id)
+      // return id
+     
+      const name = await tokenContract.methods.name().call()
+      const totalSupply = await tokenContract.methods.totalSupply().call()
+      const metaData = await tokenContract.methods.tokenURI(0).call()
+      console.log({...tokenContract.methods}, name, totalSupply, metaData)
+    }
+    const claimToken = async () => console.log(await tokenContract.methods.claimAToken().send({ from: window.web3.currentProvider.selectedAddress, gas: 2500000}))
+    
+    
+    return {networkId, account, id, blockNumber}
   }
 }
 </script>
